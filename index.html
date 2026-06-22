@@ -1,0 +1,857 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sendmoments – Top-Navigation (Dummy)</title>
+
+<style>
+  /* =========================================================================
+     DESIGN-TOKENS  – zentrale Stellschrauben für Farben, Schrift, Abstände
+     ========================================================================= */
+  :root {
+    --c-text:      #2b2622;   /* Haupttextfarbe                          */
+    --c-muted:     #8a8278;   /* gedämpfte Links ("Auf einen Blick")     */
+    --c-heading:   #1a1714;   /* Spaltenüberschriften                    */
+    --c-accent:    #e8639b;   /* Pink (Herz im Logo, Akzente)            */
+    --c-line:      #e7e2d9;   /* feine Trennlinien                       */
+    --c-bg:        #ffffff;   /* Seitenhintergrund / Header              */
+    --c-mega-bg:   #faf7f2;   /* Hintergrund der Mega-Menüs (creme)      */
+    --c-hover:     #b03a6e;   /* Linkfarbe bei Hover                     */
+    --nav-h:       64px;      /* Höhe der Hauptnavigationsleiste         */
+    --maxw:        1320px;    /* maximale Inhaltsbreite                  */
+    --font: "Helvetica Neue", Arial, "Segoe UI", system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    background: var(--c-bg);
+    color: var(--c-text);
+    font-family: var(--font);
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* =========================================================================
+     KOPFBEREICH
+     ========================================================================= */
+  .site-header { position: relative; z-index: 100; background: var(--c-bg); }
+
+  /* ---- obere schmale Servicezeile ---- */
+  .topbar { border-bottom: 1px solid var(--c-line); font-size: 12.5px; color: #6f6a63; }
+  .topbar-inner {
+    max-width: var(--maxw); margin: 0 auto; padding: 9px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .topbar .left { display: flex; align-items: center; gap: 6px; }
+  .topbar .right { display: flex; align-items: center; gap: 22px; }
+  .topbar .icon-btn { display: inline-flex; cursor: pointer; color: #6f6a63; }
+  .topbar .icon-btn:hover { color: var(--c-text); }
+
+  /* ---- Hauptleiste: Logo + Navigation + Suche ---- */
+  .mainbar { position: relative; border-bottom: 1px solid var(--c-line); }
+  .mainbar-inner {
+    max-width: var(--maxw); margin: 0 auto; padding: 0 24px;
+    height: var(--nav-h);
+    display: flex; align-items: center; gap: 26px;
+  }
+
+  /* ---- Logo ---- */
+  .logo {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 24px; font-weight: 700; letter-spacing: -.5px;
+    color: var(--c-heading); white-space: nowrap; cursor: pointer;
+    font-family: Georgia, "Times New Roman", serif;
+  }
+  .logo .heart { color: var(--c-accent); font-size: 18px; }
+
+  /* =========================================================================
+     HAUPT-NAVIGATION
+     ========================================================================= */
+  .mainnav { display: flex; align-items: center; gap: 4px; flex: 1; }
+
+  .nav-item { position: static; }            /* static -> Mega liegt relativ zur .mainbar */
+
+  .nav-trigger {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 0 12px; height: var(--nav-h);
+    background: none; border: none; cursor: pointer;
+    font-family: var(--font); font-size: 15.5px; color: var(--c-text);
+    border-bottom: 2px solid transparent;
+  }
+  .nav-trigger .label { white-space: pre-line; text-align: center; line-height: 1.1; }
+  .nav-trigger .chev {
+    width: 10px; height: 10px; transition: transform .2s ease; flex: none;
+  }
+  .nav-trigger:hover { color: var(--c-heading); }
+
+  /* aktiver / geöffneter Menüpunkt: Unterstrich + gedrehter Pfeil */
+  .nav-item:hover .nav-trigger,
+  .nav-item.open .nav-trigger {
+    color: var(--c-heading); font-weight: 700;
+    border-bottom-color: var(--c-heading);
+  }
+  .nav-item:hover .nav-trigger .chev,
+  .nav-item.open .nav-trigger .chev { transform: rotate(180deg); }
+
+  /* ---- Suchfeld rechts ---- */
+  .search {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 8px;
+    background: #f1ece4; border-radius: 22px;
+    padding: 8px 16px; min-width: 200px;
+  }
+  .search input {
+    border: none; background: none; outline: none;
+    font-family: var(--font); font-size: 14px; color: var(--c-text); width: 100%;
+  }
+  .search svg { width: 16px; height: 16px; color: #9a948b; flex: none; }
+
+  /* =========================================================================
+     MEGA-MENÜ (Dropdown)
+     ========================================================================= */
+  .mega {
+    position: absolute; left: 0; right: 0; top: 100%;
+    background: var(--c-mega-bg);
+    border-bottom: 1px solid var(--c-line);
+    box-shadow: 0 18px 30px -18px rgba(0,0,0,.25);
+    /* Standardmäßig geschlossen */
+    opacity: 0; visibility: hidden; transform: translateY(-6px);
+    transition: opacity .16s ease, transform .16s ease, visibility .16s;
+  }
+  /* Öffnen per Hover ODER per Klick (.open via JS) */
+  .nav-item:hover .mega,
+  .nav-item.open .mega {
+    opacity: 1; visibility: visible; transform: translateY(0);
+  }
+
+  .mega-inner {
+    max-width: var(--maxw); margin: 0 auto; padding: 30px 24px 38px;
+    display: grid; gap: 32px;
+    grid-template-columns: repeat(var(--cols, 5), 1fr);
+  }
+  .col-head {
+    font-size: 16px; font-weight: 700; color: var(--c-heading);
+    margin: 0 0 16px;
+  }
+
+  /* Produkt-Karten (Platzhalter statt der JPG-Referenzen) */
+  .cards { display: flex; gap: 14px; margin-bottom: 18px; }
+  .card { width: 50%; cursor: pointer; }
+  .card .thumb {
+    aspect-ratio: 3 / 4; border-radius: 4px;
+    background: linear-gradient(135deg, #efe7da, #e3d6c4 60%, #d8c8b2);
+    border: 1px solid #e3dccf;
+  }
+  .card .cap { margin-top: 8px; font-size: 14px; }
+  .card .cap small { display: block; color: var(--c-muted); font-size: 12px; }
+  .card:hover .cap { color: var(--c-hover); }
+
+  /* Linklisten mit Icon */
+  .links { list-style: none; margin: 0 0 16px; padding: 0; }
+  .links li { margin: 0 0 12px; }
+  .links a {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 14.5px; color: var(--c-text);
+  }
+  .links a:hover { color: var(--c-hover); }
+  .links svg { width: 18px; height: 18px; color: #6f6a63; flex: none; }
+  .links a:hover svg { color: var(--c-hover); }
+  .tag-lp { color: var(--c-accent); font-size: 10px; font-weight: 700; vertical-align: super; margin-left: 3px; }
+
+  /* "Auf einen Blick"-Abschluss-Links */
+  .glance {
+    display: inline-block; margin-top: 4px;
+    font-size: 13px; color: var(--c-muted);
+    text-decoration: underline; text-underline-offset: 2px;
+  }
+  .glance:hover { color: var(--c-text); }
+
+  /* Zwischenüberschrift innerhalb einer Spalte */
+  .sub-head { font-size: 15px; font-weight: 700; color: var(--c-heading); margin: 22px 0 14px; }
+
+  /* Zweispaltige Mini-Liste (z.B. "25 Jahre  Silberhochzeit") */
+  .pairs { list-style: none; margin: 0 0 8px; padding: 0; }
+  .pairs li { display: flex; gap: 12px; margin-bottom: 14px; font-size: 14.5px; }
+  .pairs .k { color: var(--c-text); white-space: nowrap; }
+
+  /* zwei Spalten nebeneinander innerhalb einer Mega-Spalte */
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+  /* Demo-Hinweisbox unter der Navigation */
+  .demo-note {
+    max-width: var(--maxw); margin: 40px auto; padding: 0 24px;
+    color: #8a8278; font-size: 13px;
+  }
+
+  @media (max-width: 1100px) {
+    .nav-trigger { padding: 0 8px; font-size: 14px; }
+    .mega-inner { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+
+
+<!-- =======================================================================
+     ICON-SPRITE  (einmal definiert, überall per <use> wiederverwendet)
+     ======================================================================= -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 8.6c0 4.2-7 9-8.8 10.2C10.2 17.6 3.2 12.8 3.2 8.6A4.4 4.4 0 0 1 12 6a4.4 4.4 0 0 1 8.8 2.6z"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 0-2 2z"/><path d="M4 5v14"/></symbol>
+  <symbol id="i-scissors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8 8l12 8M8 16 20 8"/></symbol>
+  <symbol id="i-ticket" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1 0 4H5a2 2 0 0 1-2-2 2 2 0 0 0 0-4z"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m4 18 5-5 4 4 3-3 4 4"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-news" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="14" height="16" rx="1"/><path d="M18 8h2v10a2 2 0 0 1-2 2M7 8h7M7 12h7M7 16h4"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-cart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.5 12h11l2-8H6.5"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 .9-1 1.7M12 17h.01"/></symbol>
+</svg>
+
+
+<header class="site-header">
+
+  <!-- ====================== Servicezeile ====================== -->
+  <div class="topbar">
+    <div class="topbar-inner">
+      <span class="left"><svg style="width:14px;height:14px"><use href="#i-help"/></svg> Hilfe &amp; Service</span>
+      <span class="right">
+        <span class="icon-btn" title="Sprache"><svg style="width:18px;height:18px"><use href="#i-chev"/></svg></span>
+        <span class="icon-btn" title="Konto"><svg style="width:18px;height:18px"><use href="#i-user"/></svg></span>
+        <span class="icon-btn" title="Warenkorb"><svg style="width:18px;height:18px"><use href="#i-cart"/></svg></span>
+      </span>
+    </div>
+  </div>
+
+  <!-- ====================== Hauptleiste ====================== -->
+  <div class="mainbar">
+    <div class="mainbar-inner">
+
+      <!-- Logo: Klick setzt die Navigation zurück (siehe JS) -->
+      <a class="logo" id="logo" href="#" aria-label="sendmoments Startseite">
+        sendmoments <span class="heart">&#10084;</span>
+      </a>
+
+      <nav class="mainnav" aria-label="Hauptnavigation">
+
+        <!-- ================================================================
+             MENÜPUNKT 1 — HOCHZEIT
+             ================================================================
+             ECHTE LINKS:
+             Trage die Ziel-URL direkt im href des jeweiligen <a> ein.
+             Bereits gesetzt: "Hochzeitseinladung".
+             ================================================================ -->
+        <div class="nav-item">
+          <button class="nav-trigger" aria-haspopup="true">
+            <span class="label">Hochzeit</span>
+            <svg class="chev"><use href="#i-chev"/></svg>
+          </button>
+          <div class="mega"><div class="mega-inner" style="--cols:5">
+
+            <div class="col">
+              <h3 class="col-head">Einladung &amp; Planung</h3>
+              <div class="cards">
+                <!-- ECHTER LINK: Hochzeit > Einladungskarten -->
+                <a class="card" href="https://www.sendmoments.de/hochzeit/hochzeitskarten/hochzeitseinladungen.php?navi=hz-vdh-hochzeitskarten"><div class="thumb"></div><div class="cap">Hochzeitseinladung</div></a>
+                <a class="card"><div class="thumb"></div><div class="cap">Save the Date<small>auch als digitale Version</small></div></a>
+              </div>
+              <p style="margin:18px 0 4px">„The Art of saying Yes“<br><a class="glance">Kampagne jetzt ansehen</a></p>
+              <p style="margin:14px 0 0">Findet Euren Stil<br><a class="glance">Stylefinder jetzt entdecken</a></p>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Im gleichen Design</h3>
+              <ul class="links">
+                <li><a><svg><use href="#i-mail"/></svg>Einlegeblätter</a></li>
+                <li><a><svg><use href="#i-book"/></svg>Briefumschlag</a></li>
+                <li><a><svg><use href="#i-scissors"/></svg>Gästebuch</a></li>
+                <li><a><svg><use href="#i-grid"/></svg>Menükarte</a></li>
+                <li><a><svg><use href="#i-ticket"/></svg>Tischkarte</a></li>
+                <li><a><svg><use href="#i-book"/></svg>Kirchenheft</a></li>
+                <li><a><svg><use href="#i-mail"/></svg>Antwortkarte</a></li>
+                <li><a><svg><use href="#i-news"/></svg>Hochzeitsplaner</a></li>
+              </ul>
+              <a class="glance">Auf einen Blick:<br>Alles für die Hochzeitsplanung</a>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Dekoration &amp; Feier</h3>
+              <ul class="links">
+                <li><a><svg><use href="#i-grid"/></svg>Sitzplan</a></li>
+                <li><a><svg><use href="#i-flag"/></svg>Wegweiser</a></li>
+                <li><a><svg><use href="#i-image"/></svg>Flaschenetiketten</a></li>
+                <li><a><svg><use href="#i-scissors"/></svg>Konfetti</a></li>
+                <li><a><svg><use href="#i-ticket"/></svg>Tischnummern</a></li>
+                <li><a><svg><use href="#i-scissors"/></svg>Dekoschilder</a></li>
+                <li><a><svg><use href="#i-heart"/></svg>Hochzeitskerze</a></li>
+              </ul>
+              <a class="glance">Auf einen Blick:<br>Alles für die Feier</a>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Danke &amp; Erinnerung</h3>
+              <ul class="links">
+                <li><a><svg><use href="#i-heart"/></svg>Danksagung</a></li>
+                <li><a><svg><use href="#i-book"/></svg>Fotobuch</a></li>
+                <li><a><svg><use href="#i-news"/></svg>Hochzeitszeitung</a></li>
+                <li><a><svg><use href="#i-image"/></svg>Erinnerungsbox</a></li>
+              </ul>
+              <a class="glance">Auf einen Blick:<br>Alles zum Danksagen und Erinnern</a>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Jubiläen</h3>
+              <ul class="pairs">
+                <li><span class="k">25 Jahre</span> Silberhochzeit</li>
+                <li><span class="k">50 Jahre</span> Goldene Hochzeit</li>
+                <li><span class="k">60 Jahre</span> Diamantene Hochzeit</li>
+              </ul>
+              <h4 class="sub-head">Alles für die Jubiläumsfeier</h4>
+              <ul class="links">
+                <li><a><svg><use href="#i-heart"/></svg>Danksagung</a></li>
+                <li><a><svg><use href="#i-news"/></svg>Festzeitung</a></li>
+              </ul>
+              <a class="glance">Auf einen Blick:<br>Alles für das Hochzeitsjubiläum</a>
+            </div>
+
+          </div></div>
+        </div>
+
+        <!-- ================================================================
+             MENÜPUNKT 2 — BABY
+             ================================================================ -->
+        <div class="nav-item">
+          <button class="nav-trigger" aria-haspopup="true">
+            <span class="label">Baby</span>
+            <svg class="chev"><use href="#i-chev"/></svg>
+          </button>
+          <div class="mega"><div class="mega-inner" style="--cols:4">
+
+            <div class="col">
+              <h3 class="col-head">Zur Geburt</h3>
+              <div class="cards">
+                <a class="card"><div class="thumb"></div><div class="cap">Geburtskarten</div></a>
+                <a class="card"><div class="thumb"></div><div class="cap">Dankeskarten<small>zur Geburt</small></div></a>
+              </div>
+              <ul class="links">
+                <li><a><svg><use href="#i-heart"/></svg>Fotobücher</a></li>
+                <li><a><svg><use href="#i-news"/></svg>Erinnerungsboxen</a></li>
+                <li><a><svg><use href="#i-image"/></svg>Fotoboxen</a></li>
+              </ul>
+              <a class="glance">Auf einen Blick: Alles zur Geburt</a>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Zur Taufe</h3>
+              <div class="cards">
+                <a class="card"><div class="thumb"></div><div class="cap">Einladungskarte</div></a>
+                <a class="card"><div class="thumb"></div><div class="cap">Danksagungskarte</div></a>
+              </div>
+              <ul class="links">
+                <li><a><svg><use href="#i-book"/></svg>Einlegeblatt</a></li>
+                <li><a><svg><use href="#i-scissors"/></svg>Briefumschlag</a></li>
+                <li><a><svg><use href="#i-grid"/></svg>Briefsiegel</a></li>
+                <li><a><svg><use href="#i-mail"/></svg>Einladungskarte zur Namensweihe</a></li>
+              </ul>
+              <a class="glance">Auf einen Blick: Alles zur Taufe</a>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Dekoration &amp; Feier</h3>
+              <ul class="links">
+                <li><a><svg><use href="#i-scissors"/></svg>Gästebuch</a></li>
+                <li><a><svg><use href="#i-heart"/></svg>Windlicht</a></li>
+                <li><a><svg><use href="#i-scissors"/></svg>Konfetti</a></li>
+                <li><a><svg><use href="#i-image"/></svg>Fingerabdruck-Leinwand</a></li>
+                <li><a><svg><use href="#i-book"/></svg>Kirchenheft</a></li>
+                <li><a><svg><use href="#i-heart"/></svg>Taufkerze</a></li>
+              </ul>
+              <a class="glance">Weitere Dekoideen</a>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Fotoprodukte &amp; Erinnerungen</h3>
+              <ul class="links">
+                <li><a><svg><use href="#i-book"/></svg>Fotobuch</a></li>
+                <li><a><svg><use href="#i-image"/></svg>Bilderbox</a></li>
+                <li><a><svg><use href="#i-image"/></svg>Wandbild</a></li>
+                <li><a><svg><use href="#i-grid"/></svg>Fotoaufsteller</a></li>
+                <li><a><svg><use href="#i-heart"/></svg>Geldgeschenke</a></li>
+              </ul>
+            </div>
+
+          </div></div>
+        </div>
+
+        <!-- ================================================================
+             MENÜPUNKT 3 — GEBURTSTAG
+             ================================================================ -->
+        <div class="nav-item">
+          <button class="nav-trigger" aria-haspopup="true">
+            <span class="label">Geburtstag</span>
+            <svg class="chev"><use href="#i-chev"/></svg>
+          </button>
+          <div class="mega"><div class="mega-inner" style="--cols:5">
+
+            <div class="col">
+              <h3 class="col-head">Zum Geburtstag</h3>
+              <div class="cards">
+                <a class="card"><div class="thumb"></div><div class="cap">Einladungskarten</div></a>
+                <a class="card"><div class="thumb"></div><div class="cap">Dankeskarten</div></a>
+              </div>
+              <ul class="links">
+                <li><a><svg><use href="#i-heart"/></svg>Digitale Einladung</a></li>
+                <li><a><svg><use href="#i-news"/></svg>Einladung runder Geburtstag</a></li>
+                <li><a><svg><use href="#i-mail"/></svg>Briefumschlag</a></li>
+              </ul>
+              <a class="glance">Auf einen Blick: Alles zum Geburtstag</a>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Für die Feier</h3>
+              <ul class="links">
+                <li><a><svg><use href="#i-mail"/></svg>Tischkarten</a></li>
+                <li><a><svg><use href="#i-book"/></svg>Gästebuch</a></li>
+                <li><a><svg><use href="#i-scissors"/></svg>Konfetti</a></li>
+                <li><a><svg><use href="#i-ticket"/></svg>Menükarte</a></li>
+                <li><a><svg><use href="#i-news"/></svg>Flaschenetiketten</a></li>
+              </ul>
+              <a class="glance">Weitere Dekoideen</a>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Danke &amp; Erinnerung</h3>
+              <ul class="links">
+                <li><a><svg><use href="#i-grid"/></svg>Danksagung</a></li>
+                <li><a><svg><use href="#i-flag"/></svg>Fotobuch</a></li>
+                <li><a><svg><use href="#i-image"/></svg>Bilderbox</a></li>
+              </ul>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Geschenkideen</h3>
+              <ul class="links">
+                <li><a><svg><use href="#i-grid"/></svg>Geburtstagszeitung</a></li>
+                <li><a><svg><use href="#i-flag"/></svg>Geldgeschenk</a></li>
+                <li><a><svg><use href="#i-image"/></svg>Namensbox</a></li>
+              </ul>
+              <a class="glance">Auf einen Blick:<br>Alle Geschenkideen</a>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Kindergeburtstag</h3>
+              <ul class="links">
+                <li><a><svg><use href="#i-heart"/></svg>Einladungskarte</a></li>
+                <li><a><svg><use href="#i-news"/></svg>Briefumschlag</a></li>
+                <li><a><svg><use href="#i-image"/></svg>Dekoideen<span class="tag-lp">LP</span></a></li>
+              </ul>
+              <h4 class="sub-head">Unsere Kollektionen</h4>
+              <ul class="links">
+                <li><a><svg><use href="#i-heart"/></svg>Feuerwehr Tatütata</a></li>
+                <li><a><svg><use href="#i-news"/></svg>Auf dem Bauernhof</a></li>
+                <li><a><svg><use href="#i-image"/></svg>Der Dino ist los</a></li>
+              </ul>
+              <a class="glance">Auf einen Blick:<br>Alle Kollektionen</a>
+            </div>
+
+          </div></div>
+        </div>
+
+        <!-- ================================================================
+             MENÜPUNKT 4 — JUGEND & SCHULE
+             ================================================================ -->
+        <div class="nav-item">
+          <button class="nav-trigger" aria-haspopup="true">
+            <span class="label">Jugend
+&amp; Schule</span>
+            <svg class="chev"><use href="#i-chev"/></svg>
+          </button>
+          <div class="mega"><div class="mega-inner" style="--cols:5">
+
+            <div class="col">
+              <h3 class="col-head">Zur Kommunion</h3>
+              <div class="cards" style="flex-direction:column;gap:18px">
+                <a class="card" style="width:100%"><div class="thumb" style="aspect-ratio:4/3"></div><div class="cap">Einladungskarte</div></a>
+                <a class="card" style="width:100%"><div class="thumb" style="aspect-ratio:4/3"></div><div class="cap">Dankeskarte</div></a>
+              </div>
+              <ul class="links">
+                <li><a><svg><use href="#i-heart"/></svg>Gästebuch</a></li>
+                <li><a><svg><use href="#i-news"/></svg>Briefumschlag</a></li>
+                <li><a><svg><use href="#i-image"/></svg>Deko Kommunion<span class="tag-lp">LP</span></a></li>
+              </ul>
+              <a class="glance">Auf einen Blick:<br>Alles zur Kommunion</a>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Zur Konfirmation</h3>
+              <div class="cards" style="flex-direction:column;gap:18px">
+                <a class="card" style="width:100%"><div class="thumb" style="aspect-ratio:4/3"></div><div class="cap">Einladungskarte</div></a>
+                <a class="card" style="width:100%"><div class="thumb" style="aspect-ratio:4/3"></div><div class="cap">Dankeskarte</div></a>
+              </div>
+              <ul class="links">
+                <li><a><svg><use href="#i-heart"/></svg>Gästebuch</a></li>
+                <li><a><svg><use href="#i-news"/></svg>Briefumschlag</a></li>
+                <li><a><svg><use href="#i-image"/></svg>Deko Konfirmation<span class="tag-lp">LP</span></a></li>
+              </ul>
+              <a class="glance">Auf einen Blick:<br>Alles zur Konfirmation</a>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Zur Jugendweihe</h3>
+              <div class="cards" style="flex-direction:column;gap:18px">
+                <a class="card" style="width:100%"><div class="thumb" style="aspect-ratio:4/3"></div><div class="cap">Einladungskarte</div></a>
+                <a class="card" style="width:100%"><div class="thumb" style="aspect-ratio:4/3"></div><div class="cap">Dankeskarte</div></a>
+              </div>
+              <ul class="links">
+                <li><a><svg><use href="#i-heart"/></svg>Gästebuch</a></li>
+                <li><a><svg><use href="#i-news"/></svg>Briefumschlag</a></li>
+                <li><a><svg><use href="#i-image"/></svg>Deko Jugendweihe<span class="tag-lp">LP</span></a></li>
+              </ul>
+              <a class="glance">Auf einen Blick:<br>Alles zur Jugendweihe</a>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Zur Firmung</h3>
+              <div class="cards" style="flex-direction:column;gap:18px">
+                <a class="card" style="width:100%"><div class="thumb" style="aspect-ratio:4/3"></div><div class="cap">Einladungskarte</div></a>
+                <a class="card" style="width:100%"><div class="thumb" style="aspect-ratio:4/3"></div><div class="cap">Dankeskarte</div></a>
+              </div>
+              <ul class="links">
+                <li><a><svg><use href="#i-heart"/></svg>Gästebuch</a></li>
+                <li><a><svg><use href="#i-news"/></svg>Briefumschlag</a></li>
+                <li><a><svg><use href="#i-image"/></svg>Deko Firmung<span class="tag-lp">LP</span></a></li>
+              </ul>
+              <a class="glance">Auf einen Blick:<br>Alles zur Firmung</a>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Zum Schulanfang</h3>
+              <div class="cards" style="flex-direction:column;gap:18px">
+                <a class="card" style="width:100%"><div class="thumb" style="aspect-ratio:4/3"></div><div class="cap">Einladungskarte</div></a>
+                <a class="card" style="width:100%"><div class="thumb" style="aspect-ratio:4/3"></div><div class="cap">Dankeskarte</div></a>
+              </div>
+              <ul class="links">
+                <li><a><svg><use href="#i-book"/></svg>Fotobuch</a></li>
+                <li><a><svg><use href="#i-news"/></svg>Briefumschlag</a></li>
+                <li><a><svg><use href="#i-image"/></svg>Deko Einschulung<span class="tag-lp">LP</span></a></li>
+              </ul>
+              <a class="glance">Auf einen Blick:<br>Alles zum Schulanfang</a>
+            </div>
+
+          </div></div>
+        </div>
+
+        <!-- ================================================================
+             MENÜPUNKT 5 — FOTOPRODUKTE
+             ================================================================ -->
+        <div class="nav-item">
+          <button class="nav-trigger" aria-haspopup="true">
+            <span class="label">Fotoprodukte</span>
+            <svg class="chev"><use href="#i-chev"/></svg>
+          </button>
+          <div class="mega"><div class="mega-inner" style="--cols:5">
+
+            <div class="col">
+              <h3 class="col-head">Fotobücher</h3>
+              <div class="cards">
+                <a class="card"><div class="thumb"></div><div class="cap">Alle Fotobücher</div></a>
+                <a class="card"><div class="thumb"></div><div class="cap">Familienfotobücher</div></a>
+              </div>
+              <div class="two">
+                <div>
+                  <h4 class="sub-head" style="margin-top:6px">Nach Art</h4>
+                  <ul class="links">
+                    <li><a><svg><use href="#i-heart"/></svg>Klassisches Fotobuch</a></li>
+                    <li><a><svg><use href="#i-news"/></svg>Fotobuch zum Einkleben</a></li>
+                    <li><a><svg><use href="#i-image"/></svg>Minifotobuch</a></li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 class="sub-head" style="margin-top:6px">Nach Thema</h4>
+                  <ul class="links">
+                    <li><a><svg><use href="#i-heart"/></svg>Familie</a></li>
+                    <li><a><svg><use href="#i-news"/></svg>Paare</a></li>
+                    <li><a><svg><use href="#i-image"/></svg>Urlaub</a></li>
+                    <li><a><svg><use href="#i-heart"/></svg>Freunde</a></li>
+                    <li><a><svg><use href="#i-news"/></svg>Jahresrückblick</a></li>
+                  </ul>
+                </div>
+              </div>
+              <a class="glance">Auf einen Blick: Alle Fotobuchkategorien</a>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Kalender</h3>
+              <div class="cards" style="flex-direction:column;gap:18px">
+                <a class="card" style="width:100%"><div class="thumb" style="aspect-ratio:4/3"></div><div class="cap">Fotokalender</div></a>
+                <a class="card" style="width:100%"><div class="thumb" style="aspect-ratio:4/3"></div><div class="cap">Tischkalender</div></a>
+              </div>
+              <ul class="links">
+                <li><a><svg><use href="#i-heart"/></svg>Familienkalender</a></li>
+                <li><a><svg><use href="#i-cal"/></svg>Küchenplaner</a></li>
+              </ul>
+              <a class="glance">Auf einen Blick:<br>Alles Kalender</a>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Wandbilder</h3>
+              <div class="cards" style="flex-direction:column;gap:18px">
+                <a class="card" style="width:100%"><div class="thumb" style="aspect-ratio:4/3"></div><div class="cap">Fotoposter</div></a>
+                <a class="card" style="width:100%"><div class="thumb" style="aspect-ratio:4/3"></div><div class="cap">Geldgeschenk-Poster</div></a>
+              </div>
+              <ul class="links">
+                <li><a><svg><use href="#i-heart"/></svg>Für’s Wohnzimmer</a></li>
+                <li><a><svg><use href="#i-image"/></svg>Für’s Babyzimmer</a></li>
+              </ul>
+              <a class="glance">Auf einen Blick:<br>Alle Wandbilder</a>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Holzprodukte</h3>
+              <div class="cards" style="flex-direction:column;gap:18px">
+                <a class="card" style="width:100%"><div class="thumb" style="aspect-ratio:4/3"></div><div class="cap">Holz-Bilderbox</div></a>
+                <a class="card" style="width:100%"><div class="thumb" style="aspect-ratio:4/3"></div><div class="cap">Erinnerungsbox</div></a>
+              </div>
+              <ul class="links">
+                <li><a><svg><use href="#i-heart"/></svg>Namensbox</a></li>
+                <li><a><svg><use href="#i-news"/></svg>Geldgeschenk-Box</a></li>
+              </ul>
+              <a class="glance">Auf einen Blick:<br>Alle Holzprodukte</a>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Bücher zum Ausfüllen</h3>
+              <ul class="links">
+                <li><a><svg><use href="#i-heart"/></svg>Terminplaner</a></li>
+                <li><a><svg><use href="#i-news"/></svg>Notizbuch</a></li>
+                <li><a><svg><use href="#i-image"/></svg>Gästebuch</a></li>
+              </ul>
+              <a class="glance">Auf einen Blick:<br>Alle Bücher zum Ausfüllen</a>
+              <h4 class="sub-head">Drucke &amp; Fotoabzüge</h4>
+              <ul class="links">
+                <li><a><svg><use href="#i-heart"/></svg>Bilderbox aus Papier</a></li>
+                <li><a><svg><use href="#i-news"/></svg>Fotoabzüge</a></li>
+                <li><a><svg><use href="#i-image"/></svg>Fotoaufsteller</a></li>
+              </ul>
+              <a class="glance">Auf einen Blick:<br>Alle Fotoprodukte</a>
+            </div>
+
+          </div></div>
+        </div>
+
+        <!-- ================================================================
+             MENÜPUNKT 6 — GESCHENKE
+             ================================================================ -->
+        <div class="nav-item">
+          <button class="nav-trigger" aria-haspopup="true">
+            <span class="label">Fotogeschenke</span>
+            <svg class="chev"><use href="#i-chev"/></svg>
+          </button>
+          <div class="mega"><div class="mega-inner" style="--cols:3">
+
+            <div class="col">
+              <h3 class="col-head">Geschenk nach Anlass</h3>
+              <div class="cards">
+                <a class="card"><div class="thumb"></div><div class="cap">Zur Hochzeit</div></a>
+                <a class="card"><div class="thumb"></div><div class="cap">Geldgeschenke</div></a>
+              </div>
+              <ul class="links">
+                <li><a><svg><use href="#i-heart"/></svg>Zur Geburt</a></li>
+                <li><a><svg><use href="#i-grid"/></svg>Zum Geburtstag</a></li>
+                <li><a><svg><use href="#i-image"/></svg>Als Dankeschön</a></li>
+              </ul>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Nach Person</h3>
+              <ul class="links">
+                <li><a><svg><use href="#i-heart"/></svg>Für Großeltern</a></li>
+                <li><a><svg><use href="#i-grid"/></svg>Für Partner</a></li>
+                <li><a><svg><use href="#i-image"/></svg>Für Familie</a></li>
+                <li><a><svg><use href="#i-heart"/></svg>Für Freunde</a></li>
+              </ul>
+              <a class="glance">Auf einen Blick:<br>Empfänger</a>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Immer passend</h3>
+              <ul class="links">
+                <li><a><svg><use href="#i-grid"/></svg>Fotogeschenke</a></li>
+                <li><a><svg><use href="#i-heart"/></svg>Motivationskarten</a></li>
+                <li><a><svg><use href="#i-cal"/></svg>Achtsamkeitskalender</a></li>
+                <li><a><svg><use href="#i-image"/></svg>Namensbox</a></li>
+              </ul>
+              <a class="glance">Auf einen Blick:<br>Alle Geschenke</a>
+            </div>
+
+          </div></div>
+        </div>
+
+        <!-- ================================================================
+             MENÜPUNKT 7 — ANLÄSSE & SAISON
+             ================================================================ -->
+        <div class="nav-item">
+          <button class="nav-trigger" aria-haspopup="true">
+            <span class="label">Anlässe
+&amp; Saison</span>
+            <svg class="chev"><use href="#i-chev"/></svg>
+          </button>
+          <div class="mega"><div class="mega-inner" style="--cols:4">
+
+            <div class="col">
+              <h3 class="col-head">Weihnachtsgrüße</h3>
+              <div class="cards">
+                <a class="card"><div class="thumb"></div><div class="cap">Weihnachtskarte</div></a>
+                <a class="card"><div class="thumb"></div><div class="cap">Weihnachtskarte B2B</div></a>
+              </div>
+              <ul class="links">
+                <li><a><svg><use href="#i-heart"/></svg>Neujahrskarte</a></li>
+              </ul>
+              <h4 class="sub-head">Im gleichen Design</h4>
+              <ul class="links">
+                <li><a><svg><use href="#i-mail"/></svg>Briefumschlag</a></li>
+                <li><a><svg><use href="#i-news"/></svg>Briefumschlag B2B</a></li>
+                <li><a><svg><use href="#i-grid"/></svg>Briefsiegel</a></li>
+              </ul>
+              <h4 class="sub-head">Weihnachtsgeschenke</h4>
+              <ul class="links">
+                <li><a><svg><use href="#i-cal"/></svg>Adventskalender</a></li>
+                <li><a><svg><use href="#i-heart"/></svg>Geschenk für Oma</a></li>
+                <li><a><svg><use href="#i-heart"/></svg>Geschenk für Opa</a></li>
+              </ul>
+              <a class="glance">Auf einen Blick:<br>Alle Weihnachtsgeschenke</a>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Rund um die Hochzeit</h3>
+              <div class="cards" style="flex-direction:column;gap:8px">
+                <a class="card" style="width:100%"><div class="thumb" style="aspect-ratio:4/3"></div><div class="cap">Einladung zur Verlobungsfeier</div></a>
+              </div>
+              <p style="font-size:13px;color:var(--c-muted);margin:14px 0 8px">Im gleichen Design zur Verlobungsfeier:</p>
+              <ul class="links">
+                <li><a><svg><use href="#i-ticket"/></svg>Menükarte</a></li>
+                <li><a><svg><use href="#i-mail"/></svg>Tischkarte</a></li>
+              </ul>
+              <div class="cards" style="flex-direction:column;gap:8px;margin-top:16px">
+                <a class="card" style="width:100%"><div class="thumb" style="aspect-ratio:4/3"></div><div class="cap">Einladung zum Junggesellenabschied</div></a>
+              </div>
+              <p style="font-size:13px;color:var(--c-muted);margin:14px 0 8px">Im gleichen Design zum Junggesellenabschied:</p>
+              <ul class="links">
+                <li><a><svg><use href="#i-flag"/></svg>Willkommensschild</a></li>
+                <li><a><svg><use href="#i-news"/></svg>Flaschenetiketten<span class="tag-lp">LP</span></a></li>
+              </ul>
+              <a class="glance">Auf einen Blick:<br>Alle Produkte zum Event</a>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Babyparty</h3>
+              <div class="cards" style="flex-direction:column;gap:8px">
+                <a class="card" style="width:100%"><div class="thumb" style="aspect-ratio:4/3"></div><div class="cap">Einladungskarte – Kollektionen</div></a>
+              </div>
+              <p style="font-size:13px;color:var(--c-muted);margin:14px 0 8px">Im gleichen Design</p>
+              <ul class="links">
+                <li><a><svg><use href="#i-flag"/></svg>Willkommensschild</a></li>
+                <li><a><svg><use href="#i-grid"/></svg>Spiele</a></li>
+              </ul>
+              <h4 class="sub-head">Frühjahr</h4>
+              <div class="cards" style="flex-direction:column;gap:8px">
+                <a class="card" style="width:100%"><div class="thumb" style="aspect-ratio:4/3"></div><div class="cap">Osterkarte</div></a>
+              </div>
+              <ul class="links" style="margin-top:14px">
+                <li><a><svg><use href="#i-heart"/></svg>Geschenkanhänger</a></li>
+              </ul>
+              <div class="cards" style="flex-direction:column;gap:8px">
+                <a class="card" style="width:100%"><div class="thumb" style="aspect-ratio:4/3"></div><div class="cap">Karte zum Muttertag</div></a>
+              </div>
+              <ul class="links" style="margin-top:14px">
+                <li><a><svg><use href="#i-heart"/></svg>Geschenk zum Muttertag</a></li>
+              </ul>
+            </div>
+
+            <div class="col">
+              <h3 class="col-head">Trauer</h3>
+              <div class="cards">
+                <a class="card"><div class="thumb"></div><div class="cap">Trauerkarte</div></a>
+                <a class="card"><div class="thumb"></div><div class="cap">Danksagung</div></a>
+              </div>
+              <ul class="links">
+                <li><a><svg><use href="#i-mail"/></svg>Briefumschlag</a></li>
+              </ul>
+              <h4 class="sub-head">Erinnerung</h4>
+              <ul class="links">
+                <li><a><svg><use href="#i-news"/></svg>Gedenkzeitung</a></li>
+                <li><a><svg><use href="#i-book"/></svg>Kondolenzbuch</a></li>
+                <li><a><svg><use href="#i-heart"/></svg>Trauerkerze</a></li>
+                <li><a><svg><use href="#i-image"/></svg>Wandbild mit Foto</a></li>
+              </ul>
+            </div>
+
+          </div></div>
+        </div>
+
+      </nav>
+
+      <!-- Suchfeld -->
+      <div class="search">
+        <svg><use href="#i-search"/></svg>
+        <input type="text" placeholder="Suche…" aria-label="Suche">
+      </div>
+
+    </div><!-- /.mainbar-inner -->
+  </div><!-- /.mainbar -->
+</header>
+
+<!-- Platzhalter-Inhalt unter der Navigation -->
+<div class="demo-note">
+  <p><strong>Top-Navigation – klickbarer Dummy.</strong>
+  Menüpunkt anklicken oder darüberfahren öffnet das passende Dropdown ·
+  erneuter Klick schließt es · Klick auf das Logo oder neben das Menü setzt die Navigation zurück.</p>
+</div>
+
+
+<script>
+/* =========================================================================
+   JAVASCRIPT – ausschließlich für Klick-Interaktionen
+   (Das Öffnen per Hover und die gesamte Optik laufen über CSS.)
+   ========================================================================= */
+
+  const navItems = document.querySelectorAll(".nav-item");
+  const logo     = document.getElementById("logo");
+
+  // Alle geöffneten Menüs schließen
+  function closeAll() {
+    navItems.forEach(item => item.classList.remove("open"));
+  }
+
+  // Klick auf einen Menüpunkt: dieses Menü auf/zu, alle anderen schließen
+  navItems.forEach(item => {
+    const trigger = item.querySelector(".nav-trigger");
+    trigger.addEventListener("click", e => {
+      e.preventDefault();
+      const isOpen = item.classList.contains("open");
+      closeAll();
+      if (!isOpen) item.classList.add("open");   // Toggle: war es offen, bleibt es zu
+    });
+  });
+
+  // Klick auf das Logo: Navigation zurücksetzen
+  logo.addEventListener("click", e => {
+    e.preventDefault();
+    closeAll();
+  });
+
+  // Klick irgendwo außerhalb der Navigation schließt alle Menüs
+  document.addEventListener("click", e => {
+    if (!e.target.closest(".mainnav")) closeAll();
+  });
+
+  // Taste "Esc" schließt ebenfalls
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") closeAll();
+  });
+</script>
